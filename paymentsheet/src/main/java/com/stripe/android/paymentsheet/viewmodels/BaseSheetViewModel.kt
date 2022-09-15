@@ -9,6 +9,7 @@ import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.asFlow
+import androidx.lifecycle.asLiveData
 import androidx.lifecycle.distinctUntilChanged
 import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
@@ -116,6 +117,10 @@ internal abstract class BaseSheetViewModel<TransitionTargetType>(
      * Value is null until it's loaded, and non-null (could be empty) after that.
      */
     internal val paymentMethods: LiveData<List<PaymentMethod>> = _paymentMethods
+
+    internal val showEditMenu: LiveData<Boolean> = paymentMethods
+        .map { it.isNotEmpty() }
+        .distinctUntilChanged()
 
     @VisibleForTesting
     internal val _amount = savedStateHandle.getLiveData<Amount>(SAVE_AMOUNT)
@@ -229,7 +234,7 @@ internal abstract class BaseSheetViewModel<TransitionTargetType>(
     val buttonsEnabled = MediatorLiveData<Boolean>().apply {
         listOf(
             processing,
-            editing
+            editing.asLiveData()
         ).forEach { source ->
             addSource(source) {
                 value = processing.value != true &&

@@ -620,9 +620,6 @@ internal fun PaymentOptionUi(
             .padding(top = 12.dp)
             .width(viewWidth)
             .alpha(alpha = if (isEnabled) 1.0F else 0.6F)
-            .selectable(selected = isSelected, enabled = isEnabled, onClick = {
-                onItemSelectedListener()
-            })
     ) {
         val (checkIcon, deleteIcon, label, card) = createRefs()
         SectionCard(
@@ -636,6 +633,11 @@ internal fun PaymentOptionUi(
                     start.linkTo(parent.start)
                     end.linkTo(parent.end)
                 }
+                .selectable(
+                    selected = isSelected,
+                    enabled = isEnabled,
+                    onClick = onItemSelectedListener
+                )
         ) {
             Column(
                 verticalArrangement = Arrangement.Center,
