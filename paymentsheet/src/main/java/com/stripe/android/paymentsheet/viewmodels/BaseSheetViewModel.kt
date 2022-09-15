@@ -48,6 +48,7 @@ import com.stripe.android.ui.core.forms.resources.LpmRepository
 import com.stripe.android.ui.core.forms.resources.ResourceRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -160,7 +161,7 @@ internal abstract class BaseSheetViewModel<TransitionTargetType>(
 
     internal val selection: LiveData<PaymentSelection?> = _selection
 
-    private val editing = MutableLiveData(false)
+    internal val editing = MutableStateFlow(false)
 
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
     internal val _processing = savedStateHandle.getLiveData<Boolean>(SAVE_PROCESSING)
