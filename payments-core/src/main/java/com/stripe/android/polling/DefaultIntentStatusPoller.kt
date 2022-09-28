@@ -118,7 +118,7 @@ private class PollingSuspender(
     }
 }
 
-private fun calculateDelayInMillis(attempt: Int): Long {
+internal fun calculateDelayInMillis(attempt: Int): Long {
     val seconds = (1.0 + attempt).pow(2)
     return seconds.toLong() * 1_000
 }
