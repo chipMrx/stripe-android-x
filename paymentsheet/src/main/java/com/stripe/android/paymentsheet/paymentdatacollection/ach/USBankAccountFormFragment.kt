@@ -216,25 +216,7 @@ internal class USBankAccountFormFragment : Fragment() {
                 val currentScreenState by viewModel.currentScreenState.collectAsState()
 
                 LaunchedEffect(currentScreenState) {
-                    sheetViewModel?.onError(currentScreenState.error)
-
-                    val shouldProcess = currentScreenState is NameAndEmailCollection || completePayment
-                    val enabled = if (currentScreenState is NameAndEmailCollection) {
-                        viewModel.requiredFields.value
-                    } else {
-                        true
-                    }
-
-                    updatePrimaryButton(
-                        text = currentScreenState.primaryButtonText,
-                        onClick = {
-                            viewModel.handlePrimaryButtonClick(currentScreenState)
-                        },
-                        enabled = enabled,
-                        shouldProcess = shouldProcess
-                    )
-
-                    updateMandateText(currentScreenState.mandateText)
+                    handleScreenStateChanged(currentScreenState)
                 }
 
                 when (val screenState = currentScreenState) {
@@ -253,6 +235,26 @@ internal class USBankAccountFormFragment : Fragment() {
                 }
             }
         }
+    }
+
+    private fun handleScreenStateChanged(screenState: USBankAccountFormScreenState) {
+        sheetViewModel?.onError(screenState.error)
+
+        val showProcessingWhenClicked = screenState is NameAndEmailCollection || completePayment
+        val enabled = if (screenState is NameAndEmailCollection) {
+            viewModel.requiredFields.value
+        } else {
+            true
+        }
+
+        updatePrimaryButton(
+            text = screenState.primaryButtonText,
+            onClick = { viewModel.handlePrimaryButtonClick(screenState) },
+            enabled = enabled,
+            shouldShowProcessingWhenClicked = showProcessingWhenClicked
+        )
+
+        updateMandateText(screenState.mandateText)
     }
 
     override fun onDetach() {
@@ -450,7 +452,7 @@ internal class USBankAccountFormFragment : Fragment() {
     private fun updatePrimaryButton(
         text: String?,
         onClick: () -> Unit,
-        shouldProcess: Boolean = true,
+        shouldShowProcessingWhenClicked: Boolean = true,
         enabled: Boolean = true,
         visible: Boolean = true
     ) {
@@ -459,7 +461,7 @@ internal class USBankAccountFormFragment : Fragment() {
             PrimaryButton.UIState(
                 label = text,
                 onClick = {
-                    if (shouldProcess) {
+                    if (shouldShowProcessingWhenClicked) {
                         sheetViewModel?.updatePrimaryButtonState(
                             PrimaryButton.State.StartProcessing
                         )
