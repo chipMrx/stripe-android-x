@@ -9,11 +9,11 @@ import com.stripe.android.networking.StripeRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Semaphore
 import javax.inject.Inject
 import javax.inject.Provider
 import kotlin.math.pow
@@ -24,7 +24,7 @@ class DefaultIntentStatusPoller @Inject constructor(
     private val paymentConfigProvider: Provider<PaymentConfiguration>,
     private val config: IntentStatusPollingConfig,
     private val dispatcher: CoroutineDispatcher,
-    private val logger: Logger
+    private val logger: Logger,
 ) : IntentStatusPoller {
 
     private val _state = MutableStateFlow<StripeIntent.Status?>(null)
@@ -69,8 +69,8 @@ class DefaultIntentStatusPoller @Inject constructor(
                 clientSecret = config.clientSecret,
                 options = ApiRequest.Options(
                     publishableKeyProvider = { paymentConfig.publishableKey },
-                    stripeAccountIdProvider = { paymentConfig.stripeAccountId }
-                )
+                    stripeAccountIdProvider = { paymentConfig.stripeAccountId },
+                ),
             )
         }
         return paymentIntent.getOrNull()?.status
@@ -95,26 +95,26 @@ class DefaultIntentStatusPoller @Inject constructor(
 }
 
 private class PollingSuspender(
-    private val logger: Logger
+    private val logger: Logger,
 ) {
-    private var channel: Channel<Unit>? = null
+    private var semaphore: Semaphore? = null
 
     suspend fun waitIfSuspended() {
-        if (channel != null) {
+        if (semaphore != null) {
             logger.debug("Waiting to resume polling")
-            channel?.receive()
-            channel = null
+            semaphore?.acquire()
+            semaphore = null
         }
     }
 
     fun resume() {
         logger.debug("Resuming polling")
-        channel?.trySend(Unit)
+        semaphore?.release()
     }
 
     fun suspend() {
         logger.debug("Suspending polling")
-        channel = Channel(0)
+        semaphore = Semaphore(permits = 1, acquiredPermits = 1)
     }
 }
 
